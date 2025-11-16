@@ -1,5 +1,7 @@
 import os
 import random
+import argparse
+import pandas as pd
 import numpy as np
 import torch
 
@@ -10,7 +12,7 @@ from config import CONFIG
 from data import (
     read_fasta, read_train_terms, parse_obo, read_IA_safe,
     select_top_k_labels, filter_terms_by_chosen, 
-    create_term_mappings, load_or_create_embeddings, prepare_label_matrix_and_embeddings
+    create_term_mappings, load_or_create_embeddings, prepare_label_matrix_and_embeddings ,get_tax_dict
 )
 
 
@@ -38,7 +40,7 @@ def set_random_seeds(seed):
         torch.cuda.manual_seed_all(seed)
 
 
-def main():
+def main(args):
     """Main execution pipeline."""
     print("Files are listed!!!")
     print("CUDA available:", torch.cuda.is_available())
@@ -47,6 +49,10 @@ def main():
     # Set random seeds
     set_random_seeds(CONFIG["RANDOM_SEED"])
     print("import done!!!")
+
+    BASE_PATH=CONFIG["BASE_PATH"]
+    SAVE_PATH=f"{BASE_PATH }/models/{args.model_name}"
+    os.makedirs(SAVE_PATH, exist_ok=True)
     
     # ------------------------------------------------------------
     # Load the data
@@ -68,12 +74,30 @@ def main():
     test_embeds_path= os.path.join(CONFIG["EMBED_DIR"],"test_embeds.npy")
     test_terms = np.load(test_terms_path, allow_pickle=True)
     test_embeds = np.load(test_embeds_path)
-    test_seqs = {term: embed for term, embed in zip(test_terms, test_embeds)}
+    test_seqs = {term: embed for term, embed in zip(test_terms, test_embeds)} 
+
+
+    if CONFIG["USE_TAX"]:
+        feather_path_train=  os.path.join(CONFIG["HELPERS_PATH"], 'fasta/train_seq.feather')
+        feather_df_train=pd.read_feather(feather_path_train)
+        tax_dict_train=get_tax_dict(feather_df_train) 
+
+        train_seqs = {
+        key: np.concatenate([train_seqs[key], tax_dict_train[key]]).astype(np.float32)
+        for key in train_seqs
+}
+        # Test set
+        feather_path_test = os.path.join(CONFIG["HELPERS_PATH"], 'fasta/test_seq.feather')
+        feather_df_test = pd.read_feather(feather_path_test)
+        tax_dict_test = get_tax_dict(feather_df_test)
+        # Example for test set
+        test_seqs = {
+        key: np.concatenate([test_seqs[key], tax_dict_test[key]]).astype(np.float32)
+        for key in test_seqs
+        }
 
 
 
-    
-    
     # Propagate train labels
     if CONFIG["PROPAGATE_TRAIN_LABELS"] and parents_map:
         train_terms = propagate_labels_up_hierarchy(train_proteins, train_terms, parents_map)
@@ -88,7 +112,7 @@ def main():
     train_terms=train_terms,
     train_seqs=train_seqs,
     chosen_terms=chosen_terms
-)
+    )
     
     # ------------------------------------------------------------
     # Split data and create loaders
@@ -122,9 +146,6 @@ def main():
     restricted_parents = build_restricted_parents_map(mlb.classes_, parents_map, term_to_idx)
     
     # Initialize ESM model if using PLM
-    esm_model = None
-    esm_batch_converter = None
-
     
     # Perform streaming inference
     streaming_inference_embeddings(
@@ -136,15 +157,28 @@ def main():
     mlb=mlb,
     restricted_parents=restricted_parents,
     parents_map=parents_map,
+    save_path=SAVE_PATH
+
 )
     # ------------------------------------------------------------
     # Save model and artifacts
     # ------------------------------------------------------------
-    os.makedirs("models", exist_ok=True)
-    torch.save(model.state_dict(), "models/cafa6_baseline_model.pt")
-    np.save("models/mlb_classes.npy", np.array(mlb.classes_, dtype=object))
+
+   
+    torch.save(model.state_dict(), f"{SAVE_PATH}/model.pt")
+    np.save(f"{SAVE_PATH}/mlb_classes.npy", np.array(mlb.classes_, dtype=object))
     print("[done] saved model and classes; notebook finished.")
 
 
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Train CAFA6 baseline model")
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        default="cafa6_baseline_model",
+        help="Name to use for saving the trained model and related files"
+    )
+    
+    args = parser.parse_args()
+    main(args)

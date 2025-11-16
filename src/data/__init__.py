@@ -4,13 +4,16 @@ from .preprocessing import (
     filter_terms_by_chosen,
     prepare_label_matrix,
     create_term_mappings,
-    prepare_label_matrix_and_embeddings
+    prepare_label_matrix_and_embeddings, 
+    get_tax_dict
+
 )
 from .embeddings import (
     embed_with_plm_to_memmap,
     build_tfidf_embeddings,
     load_or_create_embeddings,
     embed_batch_return_np
+
 )
 
 __all__ = [
@@ -26,5 +29,6 @@ __all__ = [
     'embed_with_plm_to_memmap',
     'build_tfidf_embeddings',
     'load_or_create_embeddings',
-    'embed_batch_return_np'
+    'embed_batch_return_np',
+    'get_tax_dict'
 ]

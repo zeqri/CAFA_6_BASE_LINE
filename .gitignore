@@ -2,7 +2,7 @@
 cafa-6-protein-function-prediction/
 embeds/
 models/
-
+helpers/
 
 __pycache__/
 *.pyc

@@ -77,3 +77,26 @@ def prepare_label_matrix_and_embeddings(train_proteins, train_terms, train_seqs,
     
     return Xembeds, Y, mlb
 
+
+def get_tax_dict(fasta):
+    tax_list = [
+        9606, 3702, 10090, 7955, 7227, 10116, 559292, 6239,
+        284812, 83333, 83332, 44689, 237561, 39947, 9031, 36329,
+        9913, 227321, 8355, 9823, 224308, 330879, 4577, 170187,
+        9615, 99287, 85962, 243232, 287, 235443, 8364
+    ]
+
+    # Map taxonomyID to index in tax_list
+    tax_indices = fasta['taxonomyID'].map(
+        {x: n for n, x in enumerate(tax_list, 1)}
+    ).fillna(0).astype(np.int32).values
+
+    # Create one-hot encoding
+    one_hot = np.eye(len(tax_list) + 1, dtype=np.float32)[tax_indices]
+
+    # Create dictionary with EntryID as key
+    tax_dict = {eid: arr for eid, arr in zip(fasta['EntryID'], one_hot)}
+
+    return tax_dict
+
+
