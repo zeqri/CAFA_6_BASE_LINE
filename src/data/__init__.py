@@ -3,7 +3,8 @@ from .preprocessing import (
     select_top_k_labels,
     filter_terms_by_chosen,
     prepare_label_matrix,
-    create_term_mappings
+    create_term_mappings,
+    prepare_label_matrix_and_embeddings
 )
 from .embeddings import (
     embed_with_plm_to_memmap,
@@ -20,6 +21,7 @@ __all__ = [
     'select_top_k_labels',
     'filter_terms_by_chosen',
     'prepare_label_matrix',
+    'prepare_label_matrix_and_embeddings',
     'create_term_mappings',
     'embed_with_plm_to_memmap',
     'build_tfidf_embeddings',

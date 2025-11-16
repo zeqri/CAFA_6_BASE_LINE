@@ -1,0 +1,11 @@
+.vscode/
+cafa-6-protein-function-prediction/
+embeds/
+models/
+
+
+__pycache__/
+*.pyc
+*.npy
+*.memmap
+*.tsv

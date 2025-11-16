@@ -44,3 +44,36 @@ def create_term_mappings(mlb):
     term_to_idx = {t: i for i, t in enumerate(mlb.classes_)}
     idx_to_term = {i: t for t, i in term_to_idx.items()}
     return term_to_idx, idx_to_term
+
+
+
+def prepare_label_matrix_and_embeddings(train_proteins, train_terms, train_seqs, chosen_terms):
+    """
+    Prepare embeddings and binarized label matrix for training.
+
+    Args:
+        train_proteins (list): List of protein IDs.
+        train_terms (dict): Dictionary mapping protein IDs to label lists.
+        train_seqs (dict): Dictionary mapping protein IDs to embeddings (numpy arrays).
+        chosen_terms (list): List of all possible terms to binarize.
+
+    Returns:
+        Xembeds (np.ndarray): Array of embeddings corresponding to proteins.
+        Y (np.ndarray): Binarized label matrix.
+        mlb (MultiLabelBinarizer): Fitted MultiLabelBinarizer object.
+    """
+    # Collect embeddings in the same order as train_proteins
+    Xembeds = np.array([train_seqs[p] for p in train_proteins], dtype=np.float32)
+    
+    # Collect labels
+    y_labels = [train_terms[p] for p in train_proteins]
+    
+    # Binarize labels
+    mlb = MultiLabelBinarizer(classes=sorted(chosen_terms))
+    Y = mlb.fit_transform(y_labels).astype(np.float32)
+    
+    print("[prep] Embeddings shape:", Xembeds.shape)
+    print("[prep] Label matrix shape:", Y.shape)
+    
+    return Xembeds, Y, mlb
+

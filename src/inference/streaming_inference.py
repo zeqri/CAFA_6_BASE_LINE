@@ -153,7 +153,55 @@ def streaming_inference(model, test_seqs, config, device, best_thresh, mlb,
             print(f"[stream] processed {i} / {N_test}")
     
     out_f.close()
+    print(f"[done] Submission written to {config['OUTPUT_SUBMISSION']}") 
+
+
+def streaming_inference_embeddings(model, test_seqs, config, device, best_thresh, mlb, 
+                                   restricted_parents=None, parents_map=None):
+    """Perform streaming inference on test embeddings (precomputed)."""
+    
+    out_fpath = config["OUTPUT_SUBMISSION"]
+    open(out_fpath, "w").close()
+    out_f = open(out_fpath, "a")
+    
+    test_ids = list(test_seqs.keys())
+    N_test = len(test_ids)
+    print(f"[test] Streaming {N_test} test sequences in batches of {config['PREDICT_BATCH_SIZE']}")
+    
+    embed_batch = []
+    embed_ids = []
+    
+    for i in range(0, N_test, config["PREDICT_BATCH_SIZE"]):
+        batch_ids = test_ids[i:i+config["PREDICT_BATCH_SIZE"]]
+        # Use the precomputed embeddings directly
+        X_buffer = np.vstack([test_seqs[pid] for pid in batch_ids]).astype(np.float32)
+        
+        model.eval()
+        with torch.no_grad():
+            X_buffer_tensor = torch.FloatTensor(X_buffer).to(device)
+            y_buffer_prob = model(X_buffer_tensor).cpu().numpy()
+        
+        if config.get("PROPAGATE_PREDICTIONS", False) and parents_map:
+            y_buffer_prob = propagate_batch(y_buffer_prob, restricted_parents, list(mlb.classes_), iterations=3)
+        
+        for ridx, pid in enumerate(batch_ids):
+            probs = y_buffer_prob[ridx]
+            predictions = get_top_k_predictions(probs, best_thresh, config["TOP_K_PER_PROTEIN"], mlb)
+            for go_id, score in predictions:
+                out_f.write(f"{pid}\t{go_id}\t{score:.3f}\n")
+        out_f.flush()
+        
+        del X_buffer, X_buffer_tensor, y_buffer_prob
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
+        if (i // config["PREDICT_BATCH_SIZE"]) % 50 == 0:
+            print(f"[stream] processed {i} / {N_test}")
+    
+    out_f.close()
     print(f"[done] Submission written to {config['OUTPUT_SUBMISSION']}")
+
 
 # import numpy as np
 # from typing import Dict, Set, List

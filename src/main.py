@@ -9,8 +9,8 @@ from config import CONFIG
 # Import data functions
 from data import (
     read_fasta, read_train_terms, parse_obo, read_IA_safe,
-    select_top_k_labels, filter_terms_by_chosen, prepare_label_matrix,
-    create_term_mappings, load_or_create_embeddings
+    select_top_k_labels, filter_terms_by_chosen, 
+    create_term_mappings, load_or_create_embeddings, prepare_label_matrix_and_embeddings
 )
 
 
@@ -23,7 +23,7 @@ from models import (
 
 
 # Import inference functions
-from inference import initialize_esm_model, streaming_inference
+from inference import streaming_inference_embeddings
 
 # Import utility functions
 from utils import propagate_labels_up_hierarchy, build_restricted_parents_map
@@ -51,13 +51,28 @@ def main():
     # ------------------------------------------------------------
     # Load the data
     # ------------------------------------------------------------
-    train_seqs = read_fasta(CONFIG["TRAIN_FASTA"])
-    train_terms = read_train_terms(CONFIG["TRAIN_TERMS"])
-    parents_map, children_map = parse_obo(CONFIG["GO_OBO"])
-    test_seqs = read_fasta(CONFIG["TEST_FASTA"])
+
+    train_terms_path = os.path.join(CONFIG["EMBED_DIR"], "train_ids.npy")
+    train_embeds_path = os.path.join(CONFIG["EMBED_DIR"], "train_embeds.npy")
+    train_terms = np.load(train_terms_path, allow_pickle=True)
+    train_terms = np.array([term.split('|')[1] for term in train_terms])
+    train_embeds = np.load(train_embeds_path)
+    train_seqs= {term: embed for term, embed in zip(train_terms, train_embeds)}
     
+    train_terms= read_train_terms(CONFIG["TRAIN_TERMS"])
+    parents_map, children_map = parse_obo(CONFIG["GO_OBO"])
     train_proteins = [p for p in train_terms.keys() if p in train_seqs]
-    print(f"[io] {len(train_proteins)} train proteins with sequences available")
+    print(f"[io] {len(train_proteins)} train proteins with sequences available") 
+
+    test_terms_path= os.path.join(CONFIG["EMBED_DIR"], "test_ids.npy")
+    test_embeds_path= os.path.join(CONFIG["EMBED_DIR"],"test_embeds.npy")
+    test_terms = np.load(test_terms_path, allow_pickle=True)
+    test_embeds = np.load(test_embeds_path)
+    test_seqs = {term: embed for term, embed in zip(test_terms, test_embeds)}
+
+
+
+    
     
     # Propagate train labels
     if CONFIG["PROPAGATE_TRAIN_LABELS"] and parents_map:
@@ -68,17 +83,17 @@ def main():
     train_terms = filter_terms_by_chosen(train_proteins, train_terms, chosen_terms)
     
     # Prepare label matrix
-    X_proteins, Y, mlb = prepare_label_matrix(train_proteins, train_terms, chosen_terms)
-    
-    # ------------------------------------------------------------
-    # Create embeddings
-    # ------------------------------------------------------------
-    X_train_np, tfidf, USE_PLM = load_or_create_embeddings(CONFIG, X_proteins, train_seqs)
+    X_embeds_train, Y, mlb = prepare_label_matrix_and_embeddings(
+    train_proteins=train_proteins,
+    train_terms=train_terms,
+    train_seqs=train_seqs,
+    chosen_terms=chosen_terms
+)
     
     # ------------------------------------------------------------
     # Split data and create loaders
     # ------------------------------------------------------------
-    X_train, X_val, y_train, y_val = split_train_validation(X_train_np, Y, CONFIG)
+    X_train, X_val, y_train, y_val = split_train_validation(X_embeds_train, Y, CONFIG)
     train_loader = create_data_loaders(X_train, y_train, CONFIG)
     
     # ------------------------------------------------------------
@@ -109,16 +124,19 @@ def main():
     # Initialize ESM model if using PLM
     esm_model = None
     esm_batch_converter = None
-    if USE_PLM:
-        esm_model, esm_batch_converter = initialize_esm_model(CONFIG)
+
     
     # Perform streaming inference
-    streaming_inference(
-        model, test_seqs, CONFIG, device, best_thresh, mlb,
-        restricted_parents, parents_map, USE_PLM,
-        esm_model, esm_batch_converter, tfidf
-    )
-    
+    streaming_inference_embeddings(
+    model=model,
+    test_seqs=test_seqs,
+    config=CONFIG,
+    device=device,
+    best_thresh=best_thresh,
+    mlb=mlb,
+    restricted_parents=restricted_parents,
+    parents_map=parents_map,
+)
     # ------------------------------------------------------------
     # Save model and artifacts
     # ------------------------------------------------------------

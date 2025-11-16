@@ -1,6 +1,6 @@
 # TSV FILES
 
-BASE_PATH="/home/fr/fr_fr/fr_ka134/kaggle"
+BASE_PATH="/Users/muhsenalzzaqry/Desktop/CAFA_6_BASE_LINE"
 
 SAMPLE_SUBMISSION_TSV = f"{BASE_PATH}/cafa-6-protein-function-prediction/sample_submission.tsv"
 IA_TSV = f"{BASE_PATH}/cafa-6-protein-function-prediction/IA.tsv"
@@ -14,7 +14,7 @@ TRAIN_SEQUENCES_FASTA = f"{BASE_PATH}/cafa-6-protein-function-prediction/Train/t
 
 # OBO FILE
 GO_BASIC_OBO = f"{BASE_PATH}/cafa-6-protein-function-prediction/Train/go-basic.obo"
-EMBEDS_PATH="/pfs/work9/workspace/scratch/fr_ka134-cafa-5/cafa-5-original/CAFA5-protein-function-prediction-2nd-place-modified/embeds"
+EMBEDS_PATH=f"{BASE_PATH}/embeds/t5large_embeddings_output"
 
 # OUTPUT FILE
 OUTPUT_TSV = "submission.tsv"
