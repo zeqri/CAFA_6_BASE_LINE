@@ -1,6 +1,6 @@
 # TSV FILES
 
-BASE_PATH="/Users/muhsenalzzaqry/Desktop/CAFA_6_BASE_LINE"
+BASE_PATH="/home/fr/fr_fr/fr_ka134/kaggle/CAFA_6_BASE_LINE"
 
 SAMPLE_SUBMISSION_TSV = f"{BASE_PATH}/cafa-6-protein-function-prediction/sample_submission.tsv"
 IA_TSV = f"{BASE_PATH}/cafa-6-protein-function-prediction/IA.tsv"
@@ -14,7 +14,7 @@ TRAIN_SEQUENCES_FASTA = f"{BASE_PATH}/cafa-6-protein-function-prediction/Train/t
 
 # OBO FILE
 GO_BASIC_OBO = f"{BASE_PATH}/cafa-6-protein-function-prediction/Train/go-basic.obo"
-EMBEDS_PATH=f"{BASE_PATH}/embeds/t5large_embeddings_output"
+EMBEDS_PATH=f"{BASE_PATH}/embeds"
 HELPERS_PATH=f"{BASE_PATH}/helpers"
 
 # OUTPUT FILE
@@ -43,7 +43,7 @@ CONFIG = {
     "TOP_K_LABELS": 3000,
     "RANDOM_SEED": 42,
     "BATCH_SIZE": 32,
-    "EPOCHS": 1,
+    "EPOCHS": 200,
     "LEARNING_RATE": 1e-3,
     "HIDDEN_UNITS": 512,
     "DROPOUT": 0.2,
@@ -54,5 +54,5 @@ CONFIG = {
     "PROPAGATE_PREDICTIONS": True,
     "TRAIN_EMB_MEMMAP": "models/train_embs.memmap",
     "TRAIN_EMB_SHAPE_FILE": "models/train_embs_shape.npy",
-    "USE_TAX": True
+    "USE_TAX": False
 }

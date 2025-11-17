@@ -139,7 +139,7 @@ def train_model_single_fold(model, train_loader, val_loader, config, device, sav
 
 
 
-def train_model_kfold(X_train_np, Y, config, device, save_path, model_creator_fn):
+def train_model_kfold(X_train_np, Y, config, device, save_path, model_creator_fn,K):
     """
     Train models using K-Fold cross-validation.
     
@@ -154,7 +154,7 @@ def train_model_kfold(X_train_np, Y, config, device, save_path, model_creator_fn
     Returns:
         fold_results: Dictionary containing results for each fold
     """
-    n_splits = config.get("K_FOLDS", 5)
+    n_splits = config.get("K_FOLDS", K)
     kfold = KFold(n_splits=n_splits, shuffle=True, random_state=config["RANDOM_SEED"])
     
     fold_results = {

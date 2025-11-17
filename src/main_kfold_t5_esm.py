@@ -108,8 +108,8 @@ def main(args):
     # ------------------------------------------------------------
     # Load the data
     # ------------------------------------------------------------
-    train_terms_path = os.path.join(CONFIG["EMBED_DIR"], "train_ids.npy")
-    train_embeds_path = os.path.join(CONFIG["EMBED_DIR"], "train_embeds.npy")
+    train_terms_path = os.path.join(CONFIG["EMBED_DIR"], "t5large_embeddings_output/train_ids.npy")
+    train_embeds_path = os.path.join(CONFIG["EMBED_DIR"], "t5large_embeddings_output/train_embeds.npy")
     train_terms = np.load(train_terms_path, allow_pickle=True)
     # train_terms = np.array([term.split('|')[1] for term in train_terms])
     train_embeds = np.load(train_embeds_path)
@@ -120,30 +120,59 @@ def main(args):
     train_proteins = [p for p in train_terms.keys() if p in train_seqs]
     print(f"[io] {len(train_proteins)} train proteins with sequences available") 
 
-    test_terms_path = os.path.join(CONFIG["EMBED_DIR"], "test_ids.npy")
-    test_embeds_path = os.path.join(CONFIG["EMBED_DIR"], "test_embeds.npy")
+    test_terms_path = os.path.join(CONFIG["EMBED_DIR"], "t5large_embeddings_output/test_ids.npy")
+    test_embeds_path = os.path.join(CONFIG["EMBED_DIR"], "t5large_embeddings_output/test_embeds.npy")
     test_terms = np.load(test_terms_path, allow_pickle=True)
     test_embeds = np.load(test_embeds_path)
     test_seqs = {term: embed for term, embed in zip(test_terms, test_embeds)} 
 
-    if CONFIG["USE_TAX"]:
-        feather_path_train = os.path.join(CONFIG["HELPERS_PATH"], 'fasta/train_seq.feather')
-        feather_df_train = pd.read_feather(feather_path_train)
-        tax_dict_train = get_tax_dict(feather_df_train) 
+    # if CONFIG["USE_TAX"]:
+    #     feather_path_train = os.path.join(CONFIG["HELPERS_PATH"], 'fasta/train_seq.feather')
+    #     feather_df_train = pd.read_feather(feather_path_train)
+    #     tax_dict_train = get_tax_dict(feather_df_train) 
+
+    #     train_seqs = {
+    #         key: np.concatenate([train_seqs[key], tax_dict_train[key]]).astype(np.float32)
+    #         for key in train_seqs
+    #     }
+        
+    #     # Test set
+    #     feather_path_test = os.path.join(CONFIG["HELPERS_PATH"], 'fasta/test_seq.feather')
+    #     feather_df_test = pd.read_feather(feather_path_test)
+    #     tax_dict_test = get_tax_dict(feather_df_test)
+    #     test_seqs = {
+    #         key: np.concatenate([test_seqs[key], tax_dict_test[key]]).astype(np.float32)
+    #         for key in test_seqs
+    #     }
+
+
+    if CONFIG["USE_TAX"] or True:
+        print("use esm 5 embeddings")
+        train_terms_esm_path=os.path.join(CONFIG["EMBED_DIR"], "esm2_650m_1024len_embeddings_output_v1/train_ids.npy")
+        train_embeds_esm_path=os.path.join(CONFIG["EMBED_DIR"], "esm2_650m_1024len_embeddings_output_v1/train_embeds.npy")
+        train_terms_esm = np.load(train_terms_esm_path, allow_pickle=True)
+        # train_terms = np.array([term.split('|')[1] for term in train_terms])
+        train_embeds_esm = np.load(train_embeds_esm_path)
+        train_seqs_esm = {term: embed for term, embed in zip(train_terms_esm, train_embeds_esm)}
 
         train_seqs = {
-            key: np.concatenate([train_seqs[key], tax_dict_train[key]]).astype(np.float32)
+            key: np.concatenate([train_seqs[key], train_seqs_esm[key]]).astype(np.float32)
             for key in train_seqs
         }
-        
-        # Test set
-        feather_path_test = os.path.join(CONFIG["HELPERS_PATH"], 'fasta/test_seq.feather')
-        feather_df_test = pd.read_feather(feather_path_test)
-        tax_dict_test = get_tax_dict(feather_df_test)
+   
+         # --- Test embeddings ---
+        test_terms_esm_path = os.path.join(CONFIG["EMBED_DIR"], "esm2_650m_1024len_embeddings_output_v1/test_ids.npy")
+        test_embeds_esm_path = os.path.join(CONFIG["EMBED_DIR"], "esm2_650m_1024len_embeddings_output_v1/test_embeds.npy")
+    
+        test_terms_esm = np.load(test_terms_esm_path, allow_pickle=True)
+        test_embeds_esm = np.load(test_embeds_esm_path)
+    
+        test_seqs_esm = {term: embed for term, embed in zip(test_terms_esm, test_embeds_esm)}
+
         test_seqs = {
-            key: np.concatenate([test_seqs[key], tax_dict_test[key]]).astype(np.float32)
-            for key in test_seqs
-        }
+        key: np.concatenate([test_seqs[key], test_seqs_esm[key]]).astype(np.float32)
+        for key in test_seqs
+       }
 
     # Propagate train labels
     if CONFIG["PROPAGATE_TRAIN_LABELS"] and parents_map:
@@ -274,10 +303,8 @@ if __name__ == "__main__":
     parser.add_argument(
     "--K",
     type=int,
-    default=5,
+    default=1,
     help="Weight ensemble by inverse validation loss (default: 5)"
-    ) 
-
-    
+    )  
     args = parser.parse_args()
     main(args)
