@@ -97,7 +97,6 @@ def main(args):
         }
 
 
-
     # Propagate train labels
     if CONFIG["PROPAGATE_TRAIN_LABELS"] and parents_map:
         train_terms = propagate_labels_up_hierarchy(train_proteins, train_terms, parents_map)

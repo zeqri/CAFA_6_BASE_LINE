@@ -43,7 +43,7 @@ CONFIG = {
     "TOP_K_LABELS": 3000,
     "RANDOM_SEED": 42,
     "BATCH_SIZE": 32,
-    "EPOCHS": 10,
+    "EPOCHS": 1,
     "LEARNING_RATE": 1e-3,
     "HIDDEN_UNITS": 512,
     "DROPOUT": 0.2,
