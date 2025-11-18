@@ -5,6 +5,11 @@ This project implements a protein function prediction system for the CAFA-6 chal
 ## Project Structure
 
 ```
+cafa-6-protein-function-prediction/
+embeds/
+├── esm2_650m_1024len_embeddings_output_v1/
+│── t5large_embeddings_output/
+│── config/     
 src/
 ├── config/
 │   ├── __init__.py
