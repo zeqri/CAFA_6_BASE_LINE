@@ -1,10 +1,11 @@
 from .prediction import propagate_batch, get_top_k_predictions
-from .streaming_inference import initialize_esm_model, streaming_inference, streaming_inference_embeddings
+from .streaming_inference import initialize_esm_model, streaming_inference, streaming_inference_embeddings ,streaming_inference_logreg 
 
 __all__ = [
     'propagate_batch',
     'get_top_k_predictions',
     'initialize_esm_model',
     'streaming_inference',
-    'streaming_inference_embeddings'
+    'streaming_inference_embeddings',
+    'streaming_inference_logreg',
 ]

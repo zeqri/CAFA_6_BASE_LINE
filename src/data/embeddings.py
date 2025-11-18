@@ -2,7 +2,7 @@ import os
 import gc
 import numpy as np
 import torch
-import esm
+# import esm
 from typing import List, Dict
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -11,8 +11,10 @@ def embed_with_plm_to_memmap(all_seq_ids: List[str],
                              seqs_dict: Dict[str, str],
                              memmap_path: str,
                              shape_file: str,
-                             config: dict):
+                             config: dict): 
     """Embed sequences using PLM and save to memmap file."""
+
+    raise NotImplementedError
     model_dir = str(config["PLM_MODEL_NAME_OR_PATH"])
     try:
         model, alphabet = esm.pretrained.load_model_and_alphabet_local(model_dir)

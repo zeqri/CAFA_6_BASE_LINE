@@ -303,7 +303,7 @@ if __name__ == "__main__":
     parser.add_argument(
     "--K",
     type=int,
-    default=1,
+    default=2,
     help="Weight ensemble by inverse validation loss (default: 5)"
     )  
     args = parser.parse_args()
